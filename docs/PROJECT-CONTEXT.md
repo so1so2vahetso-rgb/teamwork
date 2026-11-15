@@ -47,6 +47,8 @@ Build từng cảnh báo chunk SDK Firestore khoảng584kB trước gzip, không
 
 ## Git và bảo mật
 
+Đã tạo kho **Private** https://github.com/so1so2vahetso-rgb/teamwork ngày15/11/2026 và push main. Mốc mã nguồn ban đầu ac5f590; remote origin đã kết nối và main theo dõi origin/main. CLI đăng nhập tài khoản so1so2vahetso-rgb. Khi hoàn tất lần push đầu đã kiểm chứng SHA local và remote giống nhau; các commit tài liệu sau đó xem bằng git log. Không cần tạo lại kho hoặc đăng nhập lại nếu phiên CLI vẫn hợp lệ.
+
 Commit và push là sao lưu mã, không tự cập nhật Firebase Hosting. Chỉ deploy khi người dùng yêu cầu thay đổi website hoặc triển khai. Chỉ đánh dấu v1.0 khi người dùng chốt bản nộp; bản đầu là mốc khởi đầu để tiếp tục chỉnh sửa.
 
 Không commit .env.local, mật khẩu/token, service account, node_modules, dist, .firebase hoặc log. Kho Private vẫn cần loại thông tin đăng nhập. Cấu hình Firebase Web không thay thế Security Rules; không sửa quyền để làm thử cho dễ.

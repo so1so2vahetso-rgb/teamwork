@@ -4,6 +4,8 @@
 
 **Website:** https://teamworl-3021a.web.app
 
+**Mã nguồn (Private):** https://github.com/so1so2vahetso-rgb/teamwork — nhánh main. Mốc mã nguồn đầu tiên: ac5f590. Cần đăng nhập tài khoản có quyền để xem kho.
+
 Đã triển khai Hosting, Rules và indexes ngày 14/11/2026 vào project teamworl-3021a. Đường link này hoạt động độc lập với máy phát triển.
 
 ## Chức năng bản cuối

@@ -133,3 +133,10 @@ Những mục chờ Publish ở các task trước là ghi nhận lịch sử, �
 - Quét 68 tệp staged: không có đường dẫn cấu hình riêng bị cấm hoặc mẫu credential độ tin cậy cao. Không đồng nghĩa quét tự động bảo đảm phát hiện mọi bí mật.
 - npm test đạt 8/8; npm run build đạt, vẫn cảnh báo chunk SDK Firestore. Không chạy lại 30 bài Rules vì không sửa logic/Rules. git diff --cached --check báo CR/cuối dòng trống có sẵn; không sửa mã chỉ để đổi định dạng trong công việc sao lưu.
 - GitHub CLI portable được tải từ release cli/cli chính thức và kiểm tra SHA256. Người dùng chưa có tài khoản GitHub; đã hướng dẫn đăng ký GitHub Free. Chưa tạo kho remote, chưa push; khi người dùng sẵn sàng sẽ đăng nhập và tạo kho Private. Không đánh dấu v1.0 khi chưa chốt bản nộp.
+
+### Hoàn tất sao lưu GitHub cùng ngày
+
+- Người dùng đã đăng nhập và xác nhận dùng tài khoản so1so2vahetso-rgb. GitHub CLI hoàn tất device authorization.
+- Đã tạo https://github.com/so1so2vahetso-rgb/teamwork, kiểm tra visibility PRIVATE trước khi push.
+- Commit mã nguồn đầu tiên ac5f590 đã lên main; đối chiếu git rev-parse HEAD với git ls-remote xác nhận SHA giống nhau. Nhánh main theo dõi origin/main, working tree sạch sau push.
+- Cập nhật README và PROJECT-CONTEXT để phiên sau biết kho đã có sẵn; thay thế trạng thái chờ đăng ký ở ghi nhận trước. Không deploy Firebase hoặc thay đổi chức năng website.
