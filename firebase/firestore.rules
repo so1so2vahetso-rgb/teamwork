@@ -1,0 +1,240 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == '7lMpHrrC01PzqfdR2txtPUYNlhF2';
+    }
+    // Server-side role check. No client can write or list these documents.
+    match /access/admin {
+      allow get: if isAdmin();
+      allow list, write: if false;
+    }
+    function ownsProfile(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    match /users/{uid} {
+      allow get: if ownsProfile(uid) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if ownsProfile(uid)
+        && request.resource.data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'displayName', 'role', 'createdAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.displayName.matches('.*\\S.*')
+        && request.resource.data.role == 'member'
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+    function validGroup(data) {
+      return data.keys().hasAll(['name','description','archived','version','createdBy','updatedBy','createdAt','updatedAt'])
+        && data.keys().hasOnly(['name','description','archived','version','createdBy','updatedBy','createdAt','updatedAt'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 80 && data.name.matches('.*\\S.*')
+        && data.description is string && data.description.size() <= 500
+        && data.archived is bool && data.version is int && data.version > 0
+        && data.createdAt is timestamp && data.createdBy is string
+        && data.updatedBy == request.auth.uid && data.updatedAt == request.time;
+    }
+    function requiresGroupLog(id, data, action) {
+      let logId = 'group_' + id + '_' + string(data.version);
+      let logPath = /databases/$(database)/documents/activityLogs/$(logId);
+      let log = getAfter(logPath).data;
+      return !exists(logPath) && log.entityType == 'group' && log.entityId == id
+        && log.version == data.version && log.action == action && log.name == data.name
+        && log.actorId == request.auth.uid && log.createdAt == request.time;
+    }
+    match /groups/{id} {
+      allow read: if isAdmin() || (resource.data.archived == false && isMember(id));
+      allow create: if isAdmin() && validGroup(request.resource.data)
+        && request.resource.data.version == 1 && request.resource.data.archived == false
+        && request.resource.data.createdBy == request.auth.uid && request.resource.data.createdAt == request.time
+        && requiresGroupLog(id, request.resource.data, 'created');
+      allow update: if isAdmin() && validGroup(request.resource.data)
+        && resource.data.archived == false
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.version == resource.data.version + 1
+        && requiresGroupLog(id, request.resource.data, request.resource.data.archived ? 'archived' : 'updated');
+      allow delete: if false;
+    }
+    function validGroupLog(logId) {
+      let data = request.resource.data;
+      let groupPath = /databases/$(database)/documents/groups/$(data.entityId);
+      let after = getAfter(groupPath).data;
+      return data.keys().hasAll(['entityType','entityId','version','action','actorId','name','createdAt'])
+        && data.keys().hasOnly(['entityType','entityId','version','action','actorId','name','createdAt'])
+        && data.entityType == 'group' && data.entityId is string && data.version is int
+        && logId == 'group_' + data.entityId + '_' + string(data.version)
+        && data.actorId == request.auth.uid && data.createdAt == request.time
+        && data.version == after.version && data.name == after.name
+        && after.updatedAt == request.time && after.updatedBy == request.auth.uid
+        && ((!exists(groupPath) && data.version == 1 && data.action == 'created' && after.archived == false)
+          || (exists(groupPath) && get(groupPath).data.archived == false
+            && after.version == get(groupPath).data.version + 1
+            && data.action == (after.archived ? 'archived' : 'updated')));
+    }
+    function isMember(groupId) {
+      return request.auth != null && get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.active == true;
+    }
+    function activeGroup(groupId) {
+      return get(/databases/$(database)/documents/groups/$(groupId)).data.archived == false;
+    }
+    function memberLogId(groupId,uid,version) {
+      return 'member_' + groupId + '_' + uid + '_' + string(version);
+    }
+    function validMember(groupId,uid) {
+      let data=request.resource.data;
+      let logId=memberLogId(groupId,uid,data.version);
+      let logPath=/databases/$(database)/documents/activityLogs/$(logId);
+      let log=getAfter(logPath).data;
+      let ref=getAfter(/databases/$(database)/documents/users/$(uid)/groupRefs/$(groupId)).data;
+      return data.keys().hasAll(['groupId','uid','displayName','active','version','openTaskCount','joinedAt','updatedAt','updatedBy'])
+        && data.keys().hasOnly(['groupId','uid','displayName','active','version','openTaskCount','joinedAt','updatedAt','updatedBy'])
+        && data.groupId==groupId && data.uid==uid && data.active is bool && data.version is int
+        && data.displayName==get(/databases/$(database)/documents/users/$(uid)).data.displayName
+        && data.openTaskCount==0 && data.joinedAt is timestamp
+        && data.updatedBy==request.auth.uid && data.updatedAt==request.time && activeGroup(groupId)
+        && !exists(logPath) && log.entityType=='membership' && log.groupId==groupId && log.uid==uid
+        && log.version==data.version && log.action==(data.active?'added':'removed')
+        && log.actorId==request.auth.uid && log.createdAt==request.time
+        && ref.groupId==groupId && ref.uid==uid && ref.active==data.active && ref.version==data.version;
+    }
+    match /groups/{groupId}/members/{uid} {
+      allow read: if isAdmin() || (activeGroup(groupId) && isMember(groupId) && resource.data.active==true);
+      allow create: if isAdmin() && validMember(groupId,uid)
+        && request.resource.data.active==true && request.resource.data.version==1 && request.resource.data.joinedAt==request.time;
+      allow update: if (isAdmin() && validMember(groupId,uid) && resource.data.openTaskCount==0
+        && request.resource.data.active!=resource.data.active && request.resource.data.version==resource.data.version+1
+        && (request.resource.data.active?request.resource.data.joinedAt==request.time:request.resource.data.joinedAt==resource.data.joinedAt))
+        || ((isAdmin() || (ownsProfile(uid) && isMember(groupId))) && validTaskCounter(groupId,uid));
+      allow delete: if false;
+    }
+    match /users/{uid}/groupRefs/{groupId} {
+      allow read: if isAdmin() || ownsProfile(uid);
+      allow create, update: if isAdmin() && validGroupRef(uid,groupId);
+      allow delete: if false;
+    }
+    function validGroupRef(uid,groupId) {
+      let data=request.resource.data;
+      let path=/databases/$(database)/documents/groups/$(groupId)/members/$(uid);
+      let after=getAfter(path).data;
+      return data.keys().hasAll(['groupId','uid','active','version']) && data.keys().hasOnly(['groupId','uid','active','version'])
+        && data.groupId==groupId && data.uid==uid && data.active==after.active && data.version==after.version
+        && (!exists(path) || get(path).data.version+1==after.version);
+    }
+    function validMemberLog(logId) {
+      let data=request.resource.data;
+      let path=/databases/$(database)/documents/groups/$(data.groupId)/members/$(data.uid);
+      let after=getAfter(path).data;
+      return data.keys().hasAll(['entityType','groupId','uid','version','action','actorId','name','groupName','createdAt'])
+        && data.keys().hasOnly(['entityType','groupId','uid','version','action','actorId','name','groupName','createdAt'])
+        && data.entityType=='membership' && logId==memberLogId(data.groupId,data.uid,data.version)
+        && data.version==after.version && data.name==after.displayName
+        && data.groupName==get(/databases/$(database)/documents/groups/$(data.groupId)).data.name
+        && data.action==(after.active?'added':'removed') && data.actorId==request.auth.uid && data.createdAt==request.time
+        && after.updatedAt==request.time && after.updatedBy==request.auth.uid
+        && ((!exists(path) && after.version==1) || (exists(path) && get(path).data.version+1==after.version));
+    }
+    match /activityLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if (isAdmin() && (request.resource.data.entityType=='group'?validGroupLog(logId):request.resource.data.entityType=='membership'&&validMemberLog(logId)))
+        || (request.auth!=null && request.resource.data.entityType=='task' && validTaskLog(logId)
+          && (isAdmin() || isStatusActor(request.resource.data.groupId,request.resource.data.entityId)));
+      allow update, delete: if false;
+    }
+    function validDate(value) {
+      let parts=value.split('-');
+      let date=timestamp.date(int(parts[0]),int(parts[1]),int(parts[2]));
+      return value.matches('[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])')
+        && int(parts[0])>0 && date.year()==int(parts[0]) && date.month()==int(parts[1]) && date.day()==int(parts[2]);
+    }
+    function openContribution(task,uid) {
+      return !task.archived && task.status!='done' && task.assigneeId==uid ? 1 : 0;
+    }
+    function counterDelta(groupId,taskId,uid) {
+      let path=/databases/$(database)/documents/groups/$(groupId)/tasks/$(taskId);
+      return openContribution(getAfter(path).data,uid)-(exists(path)?openContribution(get(path).data,uid):0);
+    }
+    function validTaskCounter(groupId,uid) {
+      let data=request.resource.data;
+      let eventPath=/databases/$(database)/documents/activityLogs/$(data.lastTaskEvent);
+      let event=getAfter(eventPath).data;
+      let delta=counterDelta(groupId,event.entityId,uid);
+      return data.diff(resource.data).affectedKeys().hasOnly(['openTaskCount','lastTaskEvent'])
+        && resource.data.active==true && data.openTaskCount is int && data.openTaskCount>=0
+        && delta!=0 && data.openTaskCount==resource.data.openTaskCount+delta
+        && !exists(eventPath) && event.entityType=='task' && event.groupId==groupId
+        && event.actorId==request.auth.uid && event.createdAt==request.time;
+    }
+    function counterMatches(groupId,uid,taskId,eventId) {
+      let path=/databases/$(database)/documents/groups/$(groupId)/members/$(uid);
+      let delta=counterDelta(groupId,taskId,uid);
+      return getAfter(path).data.openTaskCount==get(path).data.openTaskCount+delta
+        && (delta==0 || getAfter(path).data.lastTaskEvent==eventId);
+    }
+    function validTask(groupId,data) {
+      let assigned=get(/databases/$(database)/documents/groups/$(groupId)/members/$(data.assigneeId)).data;
+      return data.keys().hasAll(['title','description','assigneeId','assigneeName','dueDate','status','archived','version','createdBy','createdAt','updatedBy','updatedAt'])
+        && data.keys().hasOnly(['title','description','assigneeId','assigneeName','dueDate','status','archived','version','createdBy','createdAt','updatedBy','updatedAt'])
+        && data.title is string && data.title.size()>0 && data.title.size()<=120 && data.title.matches('.*\\S.*')
+        && data.description is string && data.description.size()<=2000
+        && data.assigneeId is string && data.assigneeName==assigned.displayName && (data.archived || assigned.active==true)
+        && data.dueDate is string && validDate(data.dueDate)
+        && data.status in ['todo','doing','done'] && data.archived is bool && data.version is int
+        && data.createdAt is timestamp && data.createdBy is string
+        && data.updatedAt==request.time && data.updatedBy==request.auth.uid && activeGroup(groupId);
+    }
+    function taskDependencies(groupId,id) {
+      let data=request.resource.data;
+      let eventId='task_'+groupId+'_'+id+'_'+string(data.version);
+      let eventPath=/databases/$(database)/documents/activityLogs/$(eventId);
+      let event=getAfter(eventPath).data;
+      return !exists(eventPath) && event.entityType=='task' && event.groupId==groupId && event.entityId==id
+        && event.version==data.version && event.actorId==request.auth.uid && event.createdAt==request.time
+        && event.name==data.title && event.action==(data.archived?'archived':data.version==1?'created':data.status!=resource.data.status?'status_changed':'updated')
+        && counterMatches(groupId,data.assigneeId,id,eventId)
+        && (!exists(/databases/$(database)/documents/groups/$(groupId)/tasks/$(id))
+          || resource.data.assigneeId==data.assigneeId || counterMatches(groupId,resource.data.assigneeId,id,eventId));
+    }
+    match /groups/{groupId}/tasks/{id} {
+      allow read: if isAdmin() || (activeGroup(groupId) && isMember(groupId) && resource.data.archived==false);
+      allow create: if isAdmin() && validTask(groupId,request.resource.data)
+        && request.resource.data.version==1 && request.resource.data.status=='todo' && request.resource.data.archived==false
+        && request.resource.data.createdBy==request.auth.uid && request.resource.data.createdAt==request.time
+        && taskDependencies(groupId,id);
+      allow update: if (isAdmin() || (isStatusActor(groupId,id)
+          && request.resource.data.status!=resource.data.status
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','version','updatedAt','updatedBy'])))
+        && validTask(groupId,request.resource.data) && resource.data.archived==false
+        && request.resource.data.version==resource.data.version+1
+        && request.resource.data.createdBy==resource.data.createdBy && request.resource.data.createdAt==resource.data.createdAt
+        && taskDependencies(groupId,id);
+      allow delete: if false;
+    }
+    function validTaskLog(eventId) {
+      let data=request.resource.data;
+      let path=/databases/$(database)/documents/groups/$(data.groupId)/tasks/$(data.entityId);
+      let after=getAfter(path).data;
+      return data.keys().hasAll(['entityType','groupId','entityId','version','action','actorId','name','assigneeId','assigneeName','dueDate','previousAssigneeId','previousAssigneeName','fromStatus','toStatus','createdAt'])
+        && data.keys().hasOnly(['entityType','groupId','entityId','version','action','actorId','name','assigneeId','assigneeName','dueDate','previousAssigneeId','previousAssigneeName','fromStatus','toStatus','createdAt'])
+        && data.entityType=='task' && eventId=='task_'+data.groupId+'_'+data.entityId+'_'+string(data.version)
+        && data.version==after.version && data.name==after.title && data.actorId==request.auth.uid && data.createdAt==request.time
+        && after.updatedAt==request.time && after.updatedBy==request.auth.uid
+        && data.assigneeId==after.assigneeId && data.assigneeName==after.assigneeName && data.dueDate==after.dueDate
+        && data.previousAssigneeId==(exists(path)?get(path).data.assigneeId:'')
+        && data.previousAssigneeName==(exists(path)?get(path).data.assigneeName:'')
+        && data.fromStatus==(exists(path)?get(path).data.status:'') && data.toStatus==after.status
+        && data.action==(after.archived?'archived':after.version==1?'created':after.status!=get(path).data.status?'status_changed':'updated')
+        && ((!exists(path)&&after.version==1)||(exists(path)&&get(path).data.version+1==after.version));
+    }
+    function isStatusActor(groupId,id) {
+      return request.auth!=null && activeGroup(groupId) && isMember(groupId)
+        && get(/databases/$(database)/documents/groups/$(groupId)/tasks/$(id)).data.assigneeId==request.auth.uid;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
