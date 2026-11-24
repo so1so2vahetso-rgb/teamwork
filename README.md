@@ -94,7 +94,7 @@ Tài liệu task 3–7 trong docs lưu lịch sử giai đoạn; dùng hướng 
 
 ## Lưu phiên bản bằng Git
 
-Nhánh chính là main. Commit lưu một mốc trên máy; push gửi mốc lên kho GitHub Private sau khi đăng nhập và kết nối remote. Việc commit/push không tự deploy Firebase.
+Nhánh chính là `main`. Commit lưu một mốc trên máy; push gửi mốc lên kho GitHub đã kết nối. Sau mỗi thay đổi nhỏ đã kiểm tra, lưu commit và push vào cùng kho TeamWork. Lịch sử các bản trước vẫn được giữ. Việc commit/push không tự deploy Firebase.
 
 .gitignore loại .env.local, node_modules, dist, cache Firebase, log và graphify-out. HANDOFF.md là bản ghi cục bộ; ngữ cảnh chia sẻ trong kho nằm ở docs/PROJECT-CONTEXT.md và AGENTS.md. Trên máy mới cần tạo .env.local từ mẫu rồi điền cấu hình đúng project.
 
