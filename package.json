@@ -8,7 +8,7 @@
     "dev:emulator": "vite --host 127.0.0.1 --mode emulator --port 5174 --strictPort",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --test src/lib/firebaseConfig.test.js src/features/auth/accountRole.test.js src/features/tasks/taskViewModel.test.js",
+    "test": "node --test src/lib/firebaseConfig.test.js src/features/auth/accountRole.test.js src/features/tasks/taskViewModel.test.js src/features/reports/progressReportModel.test.js",
     "check:firebase": "node scripts/check-firebase-config.mjs",
     "test:rules": "firebase emulators:exec --project demo-teamwork --only auth,firestore \"node --test --test-concurrency=1 firebase/tests/*.test.js\"",
     "emulators": "firebase emulators:start --project demo-teamwork --only auth,firestore",

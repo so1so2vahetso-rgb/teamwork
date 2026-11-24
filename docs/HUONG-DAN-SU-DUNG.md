@@ -13,6 +13,7 @@ Mỗi người tự đăng ký email/mật khẩu. Tài khoản có UID 7lMpHrrC
 3. Mở Công việc của nhóm, tạo tiêu đề/mô tả, chọn một người phụ trách và hạn chót.
 4. Chỉnh sửa để đổi nội dung, hạn hoặc giao lại. Lưu trữ để bỏ khỏi danh sách hoạt động, giữ lịch sử.
 5. Xem Tổng quan để theo dõi tiến độ, Lịch sử để biết người thực hiện/thao tác/thời điểm. Tải thêm để xem hoạt động cũ.
+6. Mở **Báo cáo tiến độ** để chọn nhóm đang hoạt động và kỳ báo cáo (tuần này hoặc tuần trước). Một việc được đánh dấu hoàn thành nhiều lần trong kỳ chỉ tính một lần. Mục **Đang quá hạn** phản ánh tình trạng lúc tải báo cáo. Chọn **Xem bản in → In / Lưu PDF** rồi chọn máy in hoặc **Lưu dưới dạng PDF** trong trình duyệt.
 
 Không xóa được thành viên còn việc chưa hoàn thành. Hãy hoàn thành, giao lại hoặc lưu trữ các việc đó trước. Lưu trữ nhóm chặn thành viên truy cập nhóm đó. Bản này không có giao diện khôi phục lưu trữ.
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Archive, ArrowLeft, ArrowRight, FolderKanban, Layers, LogOut, Pencil, Plus, ShieldCheck, UsersRound, WifiOff,LayoutDashboard,ListChecks,History } from 'lucide-react'
+import { Archive, ArrowLeft, ArrowRight, FileChartColumn, FolderKanban, Layers, LogOut, Pencil, Plus, ShieldCheck, UsersRound, WifiOff,LayoutDashboard,ListChecks,History } from 'lucide-react'
 import { configuredAdminUid, getFirebaseClients } from '../../lib/firebase.js'
 import { resolveAccountRole, createSessionService } from '../auth/sessionService.js'
 import { createGroupRepository } from './groupRepository.js'
@@ -9,6 +9,7 @@ import {createMemberRepository} from './memberRepository.js'
 import TasksPage from '../tasks/TasksPage.jsx'
 import TaskOverview from '../tasks/TaskOverview.jsx'
 import ActivityPage from '../activity/ActivityPage.jsx'
+import ProgressReportPage from '../reports/ProgressReportPage.jsx'
 import { groupErrorMessage } from './groupErrors.js'
 import './groups.css'
 
@@ -77,8 +78,23 @@ export default function GroupsPage({ user, onBack }) {
   function navigate(next){setTaskGroupId(null);setPage(next);setNotice('')}
 
   return <div className="workspace-layout">
-    <aside className="workspace-sidebar"><div className="workspace-caption">KHÔNG GIAN LÀM VIỆC</div><nav aria-label="Điều hướng nhóm"><button className={!taskGroupId&&page==="overview"?"workspace-nav-current":""} type="button" onClick={()=>navigate("overview")}><LayoutDashboard size={18}/>Tổng quan</button><button className={!taskGroupId&&page==="mine"?"workspace-nav-current":""} type="button" onClick={()=>navigate("mine")}><ListChecks size={18}/>Công việc của tôi</button><button className={taskGroupId||page==="groups"?"workspace-nav-current":""} type="button" onClick={()=>navigate("groups")}><FolderKanban size={18}/>Nhóm làm việc</button>{isAdmin&&<button className={page==="history"?"workspace-nav-current":""} type="button" onClick={()=>navigate("history")}><History size={18}/>Lịch sử hoạt động</button>}<button type="button" onClick={onBack}><ArrowLeft size={18} />Tài khoản của tôi</button></nav><div className="workspace-account"><span className="workspace-role"><ShieldCheck size={15} />{isAdmin?'Admin':'Thành viên'}</span><span className="workspace-email">{user.email}</span><button type="button" onClick={logout} disabled={leaving}><LogOut size={17} />{leaving ? 'Đang đăng xuất…' : 'Đăng xuất'}</button></div></aside>
-    <main className="groups-main">{taskGroup?<TasksPage key={taskGroup.id} group={taskGroup} user={user} isAdmin={isAdmin} onBack={()=>navigate('groups')} onMembers={()=>setSelectedGroup(taskGroup)}/>:page==='history'&&isAdmin?<ActivityPage user={user}/>:page==='overview'||page==='mine'?<TaskOverview key={page} groups={groups} user={user} isAdmin={isAdmin} mine={page==='mine'} onOpenGroup={id=>setTaskGroupId(id)}/>:<><div className="groups-breadcrumb">Không gian quản lý <ArrowRight size={13} /> Nhóm làm việc</div>
+    <aside className="workspace-sidebar"><div className="workspace-caption">KHÔNG GIAN LÀM VIỆC</div>
+      <nav aria-label="Điều hướng nhóm">
+        <button className={!taskGroupId&&page==='overview'?'workspace-nav-current':''} type="button" onClick={()=>navigate('overview')}><LayoutDashboard size={18}/>Tổng quan</button>
+        {isAdmin&&<button className={page==='report'?'workspace-nav-current':''} aria-current={page==='report'?'page':undefined} type="button" onClick={()=>navigate('report')}><FileChartColumn size={18}/>Báo cáo tiến độ</button>}
+        {role==='member'&&<button className={!taskGroupId&&page==='mine'?'workspace-nav-current':''} type="button" onClick={()=>navigate('mine')}><ListChecks size={18}/>Công việc của tôi</button>}
+        <button className={taskGroupId||page==='groups'?'workspace-nav-current':''} type="button" onClick={()=>navigate('groups')}><FolderKanban size={18}/>Nhóm làm việc</button>
+        {isAdmin&&<button className={page==='history'?'workspace-nav-current':''} type="button" onClick={()=>navigate('history')}><History size={18}/>Lịch sử hoạt động</button>}
+        <button type="button" onClick={onBack}><ArrowLeft size={18}/>Tài khoản của tôi</button>
+      </nav>
+      <div className="workspace-account"><span className="workspace-role"><ShieldCheck size={15} />{isAdmin?'Admin':'Thành viên'}</span><span className="workspace-email">{user.email}</span><button type="button" onClick={logout} disabled={leaving}><LogOut size={17} />{leaving ? 'Đang đăng xuất…' : 'Đăng xuất'}</button></div>
+    </aside>
+    <main key={taskGroup ? `group:${taskGroup.id}` : page} className="groups-main workspace-view">
+      {taskGroup?<TasksPage key={taskGroup.id} group={taskGroup} user={user} isAdmin={isAdmin} onBack={()=>navigate('groups')} onMembers={()=>setSelectedGroup(taskGroup)}/>
+      :page==='history'&&isAdmin?<ActivityPage user={user}/>
+      :page==='report'&&isAdmin?<ProgressReportPage groups={groups} ready={!loading&&confirmed} online={online} groupsError={error} onReloadGroups={()=>setRefresh(value=>value+1)}/>
+      :page==='overview'||(page==='mine'&&role==='member')?<TaskOverview key={page} groups={groups} user={user} isAdmin={isAdmin} mine={page==='mine'} onOpenGroup={id=>setTaskGroupId(id)}/>
+      :<><div className="groups-breadcrumb">Không gian quản lý <ArrowRight size={13} /> Nhóm làm việc</div>
       <header className="groups-heading"><div><span className="groups-eyebrow">CÙNG NHAU LÀM VIỆC TỐT HƠN</span><h1>{isAdmin?'Nhóm làm việc':'Nhóm của tôi'}<span>.</span></h1><p>{isAdmin?'Tạo không gian chung cho mỗi mục tiêu của bạn.':'Các nhóm bạn được admin thêm vào.'}</p></div>{isAdmin&&<button className="group-primary" type="button" disabled={!canWrite} onClick={() => open('create')}><Plus size={18} />Tạo nhóm mới</button>}</header>
       {error && <div className="group-error" role="alert"><span>{error}</span><button type="button" className="group-secondary" onClick={() => setRefresh(value => value + 1)}>Tải lại</button></div>}
       {notice && <p className="group-success" role="status">{notice}</p>}

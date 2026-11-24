@@ -4,9 +4,9 @@
 
 **Website:** https://teamworl-3021a.web.app
 
-**Mã nguồn (Private):** https://github.com/so1so2vahetso-rgb/teamwork — nhánh main. Mốc mã nguồn đầu tiên: ac5f590. Cần đăng nhập tài khoản có quyền để xem kho.
+**Kho GitHub ban đầu:** https://github.com/so1so2vahetso-rgb/teamwork — nhánh main. Mốc mã nguồn đầu tiên: ac5f590.
 
-Đã triển khai Hosting, Rules và indexes ngày 14/11/2026 vào project teamworl-3021a. Đường link này hoạt động độc lập với máy phát triển.
+Đã triển khai Hosting, Rules và indexes lần đầu ngày 14/11/2026 vào project teamworl-3021a. Bản Báo cáo tiến độ và hiệu ứng khi bấm đã được đưa lên Hosting ngày 24/11/2026. Đường link này hoạt động độc lập với máy phát triển.
 
 ## Chức năng bản cuối
 
@@ -14,7 +14,8 @@
 - Một admin quản lý nhóm, thêm/xóa thành viên, tạo/sửa/giao lại/lưu trữ công việc và đặt hạn chót.
 - Một người có thể tham gia nhiều nhóm; mỗi việc giao cho đúng một người thuộc nhóm.
 - Thành viên xem việc trong nhóm mình, chỉ đổi trạng thái việc được giao cho mình. Ba trạng thái: Chưa làm, Đang làm, Hoàn thành. Có thể chuyển ngược; hoàn thành có hiệu lực ngay.
-- Tổng quan, Công việc của tôi, bảng ba cột/danh sách, tìm tên có hoặc không dấu, lọc nhóm/người/trạng thái/quá hạn, thống kê và tỷ lệ hoàn thành.
+- Tổng quan, Công việc của tôi cho thành viên, bảng ba cột/danh sách, tìm tên có hoặc không dấu, lọc nhóm/người/trạng thái/quá hạn, thống kê và tỷ lệ hoàn thành.
+- Báo cáo tiến độ cho admin. Chọn nhóm và tuần để xem việc được đánh dấu hoàn thành trong kỳ, việc đang quá hạn, rồi in hoặc lưu PDF bằng trình duyệt.
 - Đồng bộ dữ liệu thời gian thực giữa các phiên. Lịch sử hoạt động có phân trang, chỉ admin xem.
 - Quyền kiểm tra tại máy chủ. Task, bộ đếm việc và lịch sử ghi nguyên tử; kiểm tra version tránh ghi đè thay đổi của người khác.
 

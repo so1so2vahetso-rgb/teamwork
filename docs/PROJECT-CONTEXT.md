@@ -1,6 +1,6 @@
 # TeamWork — ngữ cảnh để tiếp nối
 
-Cập nhật 15/11/2026. Tài liệu này theo mã nguồn lên GitHub để phiên làm việc mới nắm được quyết định và trạng thái. HANDOFF.md là bản ghi cục bộ chi tiết, không commit; không cần tệp đó để chạy ứng dụng.
+Cập nhật 24/11/2026. Tài liệu này theo mã nguồn lên GitHub để phiên làm việc mới nắm được quyết định và trạng thái. HANDOFF.md là bản ghi cục bộ chi tiết, không commit; không cần tệp đó để chạy ứng dụng.
 
 ## Mục tiêu và ràng buộc
 
@@ -12,6 +12,8 @@ Cập nhật 15/11/2026. Tài liệu này theo mã nguồn lên GitHub để phi
 ## Trạng thái ứng dụng
 
 Website: https://teamworl-3021a.web.app. Project Firebase: teamworl-3021a. Hosting, Rules và indexes đã deploy thành công ngày 14/11/2026. Website chạy độc lập với máy phát triển.
+
+Ngày 24/11/2026 đã cập nhật riêng Hosting: menu admin thay Công việc của tôi bằng Báo cáo tiến độ. Thành viên giữ Công việc của tôi. Báo cáo lọc theo nhóm và tuần, hiển thị việc hoàn thành trong kỳ, việc đang quá hạn và có chế độ in/lưu PDF. Giao diện có phản hồi khi bấm, chuyển mục và mở hộp thoại, theo tùy chọn giảm chuyển động của thiết bị. Đã đối chiếu trang đầu và tài nguyên giao diện trên Hosting với bản build.
 
 Một admin duy nhất quản lý toàn bộ nhóm/công việc. UID hiện tại được cấu hình trong Rules và env; xem README. Thành viên tự đăng ký, chỉ được admin thêm vào nhóm sau đó. Quan hệ thành viên–nhóm nhiều–nhiều. Mỗi task thuộc một nhóm, giao đúng một người thuộc nhóm đó.
 
